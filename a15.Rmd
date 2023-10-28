@@ -1,0 +1,363 @@
+---
+title: "A15- Student Performance Data Set"
+author: "Panagiotis Symianakis"
+date: "04/01/2022"
+output: 
+  html_document: 
+    fig_caption: yes
+    toc_depth: 5
+    fig_width: 9
+    fig_height: 6
+---
+## Appendix
+### Athens University of Economics and Bussines
+![](C:\Users\Πάνος\Desktop\stat.aueb\unnamed.png)
+  
+### Advanced Data Analysis  
+### M.Sc. in Statistics
+
+First of all, we input the given data set to our environment in R.
+```{r}
+library(readr)
+student_por <- read_delim("C:/Users/Πάνος/Desktop/stat.aueb/Advanced Data Analysis/Assignment 1/student-por.csv",delim = ";", escape_double = FALSE, trim_ws = TRUE)
+student<-data.frame(student_por)
+head(student)
+```
+Then we convert the data which are characters into factors.
+```{r}
+student$school<-as.factor(student$school)
+student$sex<-as.factor(student$sex)
+student$address<-as.factor(student$address)
+student$famsize<-as.factor(student$famsize)
+student$Pstatus<-as.factor(student$Pstatus)
+student$Mjob<-as.factor(student$Mjob)
+student$Fjob<-as.factor(student$Fjob)
+student$reason<-as.factor(student$reason)
+student$guardian<-as.factor(student$guardian)
+student$schoolsup<-as.factor(student$schoolsup)
+student$famsup<-as.factor(student$famsup)
+student$paid<-as.factor(student$paid)
+student$activities<-as.factor(student$activities)
+student$nursery<-as.factor(student$nursery)
+student$higher<-as.factor(student$higher)
+student$internet<-as.factor(student$internet)
+student$romantic<-as.factor(student$romantic)
+
+summary(student)
+```
+Then we will separate the students according to their school in order to be easier for us to make some assumptions.
+```{r}
+stgp<-data.frame()
+stms<-data.frame()
+for(i in 1:nrow(student)){
+  if(student$school[i]=="GP"){stgp<-rbind(stgp,student[i,])}
+  if(student$school[i]=="MS"){stms<-rbind(stms,student[i,])}
+}
+summary(stgp)
+summary(stms)
+```
+Now, we will make two new data frames. In the first there will be the students who passed the course and on the other they who didn't make it.
+```{r}
+stpass<-data.frame()
+stfail<-data.frame()
+grades<-student
+for(i in 1:nrow(student)){
+  if(student$G3[i]>=10){stpass<-rbind(stpass,student[i,])}
+  if(student$G3[i]>=10){grades$G3[i]<-"Pass"}
+  if(student$G3[i]<10){stfail<-rbind(stfail,student[i,])}
+  if(student$G3[i]<10){grades$G3[i]<-"Fail"}
+  }
+summary(stpass)
+summary(stfail)
+```
+#### Visualising the data set
+```{r}
+par(mfrow=c(2,2))
+barplot(table(student$school), main="Students per school")
+barplot(table(student$sex), main="Students per sex")
+barplot(table(student$schoolsup), main="Extra educational support")
+barplot(table(student$famsup), main="Family educationsl support")
+```
+Moreover we will depict the students who passed and they who failed the course.
+```{r}
+par(mfrow=c(1,2))
+barplot(table(grades$G3),main="Fail/Pass")
+barplot(table(student$sex,student$school),beside=TRUE,legend=TRUE,main ="Sex per school")
+barplot(table(stpass$sex,stpass$school),legend=TRUE,beside=TRUE,main="Sex & school per Pass ")
+barplot(table(stfail$sex,stfail$school),legend=TRUE,beside=TRUE,args.legend = list(x="topleft") ,main="Sex & school per Fail ")
+```
+  
+Now we will present two pie plots with the mother's and father's education.
+```{r}
+par(mfrow=c(1,2))
+pie(table(student$Medu),main="Mother's education")
+pie(table(student$Fedu),main="Father's education")
+```
+  
+There will be a boxplot for the outliers of our data set.
+```{r}
+numeric.only <- sapply(student,class)=='numeric'
+data<-student
+y <- data[,numeric.only]
+n<-ncol(y)
+boxplot(y)
+```
+  
+### Pairwise Associations. 
+In this section we aim to find any correlation between the variables.  
+```{r}
+library(corrgram)
+corrgram(student,lower.panel=panel.shade,
+  upper.panel=panel.pie, text.panel=panel.txt,main="Correlation between variables")
+```
+In this section we will deal with the relationships presented between the variables in pairs. Initially, as it is well known, one can observe the great correlation between the three grades (\textbf{G1},\textbf{G2},\textbf{G3}). Also, from the graph it seems that there is a great correlation between the education of the mother (\textbf{Medu}) and the father(\textbf{Fedu}), which look like they are correlated with the grades \textbf{G1},\textbf{G2} and \textbf{G3}. Furthermore, the grades look like they get affected by the time a child spends to study.\\
+Moreover,noteworthy is the small correlation that exists between daily alcohol consumption (\textbf{Dalc}) and that of the weekend (\textbf{Walc}). This is to be expected as both values  are correlated with the time students spend outside the home (\textbf{goout}).\\
+On the other hand, the number of failures has a minimal negative correlation with the time of studying and mother's and father's education level. Finaly,  there seems to be a higher negative association of the failures with grades. The others variables do not seem to have significant influence each other.  
+
+#### Testing for normality  
+
+#### Q-Q plots  
+
+```{r}
+p<-ncol(y)
+par(mfrow=c(2,2))
+for (i in 1:p){
+  qqnorm(y[,i],main=names(y)[i])
+  qqline(y[,i])
+}
+```  
+  
+
+#### Saphiro test for normality  
+The Shapiro–Wilk test tests the null hypothesis that a sample $x_1,x_2,...,x_n$ came from a normally distributed population. The test statistic is $$W=\frac{(\sum_{i=1}^na_ix_{(i)})^2}{\sum_{i=1}^n(x_i-\bar{x})^2}$$
+It is important not to confused the $x_{(i)}$ which the ith-smallest number in the sample with the $x_i$ which is the ith observe of the sample.
+```{r}
+for (i in 1:length(y)){
+  print(shapiro.test(y[,i]))
+}
+```
+By the q-q plots and Saphiro-Wilk test we can not assume normality.  
+
+#### Skewness and Kurtosis  
+
+Formula for skewness:  
+$$γ_1=\frac{\frac{1}{n}\sum_{i=1}^n(x_i-\bar{x})^3}{(\frac{1}{n}\sum_{i=1}^n(x_i-\bar{x})^2)^{3/2}}$$
+$\bullet$ If the coefficient of skewness is greater than 0 , then the graph is said to be positively skewed with the majority of data values less than mean. Most of the values are concentrated on the left side of the graph.  
+$\bullet$ If the coefficient of skewness is equal to 0 or approximately close to 0 , then the graph is said to be symmetric and data is normally distributed.  
+$\bullet$ If the coefficient of skewness is less than 0 ,then the graph is said to be negatively skewed with the majority of data values greater than mean. Most of the values are concentrated on the right side of the graph.
+```{r}
+library(moments)
+skewness(y)
+```
+It is observed that the values of the variables \textbf{failures}, \textbf{absences}, \textbf{Dalc} and \textbf{traveltime} show positive skewness. On the contrary, the variables \textbf{famrel}, \textbf{G3} and \textbf{health} are negatively skewed. 
+  
+Formula for \textbf{Kurtosis}
+$$γ_2=\frac{\frac{1}{n}\sum_{i=1}^n(x_i-\bar{x})^4}{(\frac{1}{n}\sum_{i=1}^n(x_i-\bar{x})^2)^2} $$
+There exist 3 types of Kurtosis values on the basis of which sharpness of the peak is measured.  
+$\bullet$ Platykurtic.If the coefficient of kurtosis is less than 3 i.e. $\gamma_{2}<3$, then the data distribution is platykurtic. Being platykurtic doesn’t mean that the graph is flat-topped.  
+$\bullet$ Mesorkurtic.If the coefficient of kurtosis is equal to 3 or approximately close to 3 i.e. $\gamma_{2}=3$, then the data distribution is mesokurtic. For normal distribution, kurtosis value is approximately equal to 3.  
+$\bullet$ Leptokurtic.If the coefficient of kurtosis is greater than 3 i.e. $\gamma_{2}>3$, then the data distribution is leptokurtic and shows a sharp peak on the graph.
+
+```{r}
+kurtosis(y)
+```
+### Regression Models.  
+In this part, we are going to fit some regression models in order to understand better which variables are most important in extracting the final grade. It's known that the variables **G1**,**G2** and **G3** are highly correlated as **G1** and **G2** correspond to the first and second period grades. It is more difficult to predict **G3** without taking into account **G2** and **G3**, but it is what we will try.  
+First of all, we start with LASSO procedure and then we are going to do Stepwise procedure in order to fit our regression model.  
+
+#### LASSO regression
+LASSO regression is a type of linear regression that uses shrinkage. The lasso process encourages simple models with fewer parameters.
+LASSO is based on the $l_1$ penalization.  
+$$minimize(\mathbf{y}-\mathbf{Z}β)^T(\mathbf{y}-\mathbf{Z}β)$$
+$$s.t. \sum_{j=1}^p |β_j| \leq t$$ 
+$$minimize\{(\mathbf{y}-\mathbf{Z}β)^T(\mathbf{y}-\mathbf{Z}β)+λ \sum_{j=1}^p |β_j|\}$$  
+
+##### Steps for LASSO:  
+1. Run LASSO for a variety of values 
+2. Plot the regularization paths 
+3. Implement k-fold regularization 
+4. Estimate the coefficients using λ with minimum CV-MSE 
+  
+#### LASSO for G1  
+```{r}
+library(glmnet)
+mfull<-lm(student$G1~.-G2-G3,data=student)
+X<-model.matrix(mfull)[,-1]
+lasso1<-glmnet(X,student$G1)
+plot(lasso1, label=TRUE, main="G1 LASSO regression")
+plot(lasso1, xvar='lambda', label=TRUE, log)
+```
+Now, we are looking for the most appropriate λ: 
+```{r}
+lasso2 <- cv.glmnet(X,student$G1)
+l<-lasso2$lambda.min
+l
+```
+```{r}
+lasso2$lambda.1se
+plot(lasso2)
+```
+The minimum λ= `r round(l,2)` and maximum λ= `r round(lasso2$lambda.1se,2)` with a degree of freedom. It's more useful to use the second because there is a low mean square error with fewer variables. The coefficients with minimum mean square error (MSE) are:
+```{r}
+blasso2<- coef(lasso2, s = "lambda.1se")
+blasso2
+```
+  
+```{r}
+print(lasso2)
+```
+   
+#### Stepwise procedure for G1
+```{r}
+mfull<-lm(G1~.-G2-G3,data=student)
+summary(step(mfull,direction = "both",k=log(100))) #BIC
+```
+
+```{r}
+mfull<-lm(G1~.-G2-G3,data=student)
+summary(step(mfull,direction = "both")) #AIC
+```
+#### Backward procedure for G1
+```{r}
+mfull<-lm(G1~.-G2-G3,data=student)
+summary(step(mfull,direction = "back",k=log(100))) #BIC
+```
+#### FINAL G1
+```{r}
+m1<-lm(G1~school+Medu+studytime+failures+schoolsup+higher+Dalc+absences,data=student)
+summary(m1)
+```
+
+```{r}
+library(BAS)
+bas.results<-bas.lm(G1~school+Medu+studytime+failures+schoolsup+higher+Dalc+absences,data=student,prior="BIC")
+bas.results
+plot(bas.results)
+```
+### LASSO for G2
+```{r}
+mfull<-lm(student$G2~.-G1-G3,data=student)
+X<-model.matrix(mfull)[,-1]
+lasso1<-glmnet(X,student$G2)
+plot(lasso1, label=TRUE, main="G2 LASSO regression")
+plot(lasso1, xvar='lambda', label=TRUE, log)
+```
+Now, we are looking for the most appropriate λ: 
+```{r}
+lasso2 <- cv.glmnet(X,student$G2)
+l<-lasso2$lambda.min
+l
+```
+```{r}
+lasso2$lambda.1se
+plot(lasso2)
+```
+The minimum $λ_{min}=$ `r round(l,2)` and maximum $λ_{max}=$ `r round(lasso2$lambda.1se,2)` with a degree of freedom. It's more useful to use the second because there is a low mean square error with fewer variables. The coefficients with minimum mean square error (MSE) are:
+```{r}
+blasso2<- coef(lasso2, s = "lambda.1se")
+blasso2
+```
+  
+```{r}
+print(lasso2)
+```
+  
+#### Stepwise procedure for G2
+```{r}
+mfull<-lm(G2~.-G1-G3,data=student)
+summary(step(mfull,direction = "both",k=log(100))) #BIC
+```
+
+```{r}
+mfull<-lm(G2~.-G1-G3,data=student)
+summary(step(mfull,direction = "both")) #AIC
+```
+#### Backward procedure for G2
+```{r}
+mfull<-lm(G2~.-G1-G3,data=student)
+summary(step(mfull,direction = "back",k=log(100))) #BIC
+```
+#### FINAL G2
+```{r}
+m2<-lm(G2~school+Medu+studytime+failures+schoolsup+higher+Dalc+health+absences,data=student)
+summary(m2)
+```
+```{r}
+library(BAS)
+bas.results<-bas.lm(G2~school+Medu+studytime+failures+schoolsup+higher+Dalc+health+absences,data=student,prior="BIC")
+bas.results
+plot(bas.results)
+```
+### LASSO for G3
+```{r}
+mfull<-lm(student$G3~.-G1-G2,data=student)
+X<-model.matrix(mfull)[,-1]
+lasso1<-glmnet(X,student$G3)
+plot(lasso1, label=TRUE, main="G3 LASSO regression")
+plot(lasso1, xvar='lambda', label=TRUE, log)
+```
+Now, we are looking for the most appropriate λ: 
+```{r}
+lasso2 <- cv.glmnet(X,student$G3)
+l<-lasso2$lambda.min
+l
+```
+```{r}
+lasso2$lambda.1se
+plot(lasso2)
+```
+The minimum $λ_{min}=$ `r round(l)` and maximum $λ_{max}=$`r round(lasso2$lambda.1se,1)` with a degree of freedom. It's more useful to use the second because there is a low mean square error with fewer variables. The coefficients with minimum mean square error (MSE) are:
+```{r}
+blasso2<- coef(lasso2, s = "lambda.1se")
+blasso2
+```
+  
+```{r}
+print(lasso2)
+```
+  
+#### Stepwise procedure for G3
+```{r}
+mfull<-lm(G3~.-G1-G2,data=student)
+summary(step(mfull,direction = "both",k=log(100))) #BIC
+```
+
+```{r}
+mfull<-lm(G3~.-G1-G2,data=student)
+summary(step(mfull,direction = "both")) #AIC
+```
+#### Backward procedure for G3
+```{r}
+mfull<-lm(G3~.-G1-G2,data=student)
+summary(step(mfull,direction = "back",k=log(100))) #BIC
+```
+#### FINAL G3
+```{r}
+m3<-lm(G3~school+Fedu+studytime+failures+schoolsup+higher+Dalc+health,data=student)
+summary(m3)
+1-sum(m3$res^2)/((648)*var(student$G3))
+```
+```{r}
+library(BAS)
+bas.results<-bas.lm(G3~school+Fedu+studytime+failures+schoolsup+higher+Dalc+health,data=student,prior="BIC")
+bas.results
+plot(bas.results)
+```
+  
+#### Stepwise procedure for G3 including G1 and G3  
+```{r}
+mfull<-lm(G3~.,data=student)
+summary(step(mfull,direction = "both",k=log(100))) #BIC
+```
+  
+#### Final G3 with predictors G1 and G2  
+```{r}
+m3<-lm(G3~school+sex+failures+G1+G2,data=student)
+summary(m3)
+```
+```{r}
+library(BAS)
+bas.results<-bas.lm(G3~school+sex+failures+G1+G2,data=student,prior="BIC")
+bas.results
+plot(bas.results)
+```
